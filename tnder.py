@@ -36,11 +36,12 @@ else:
 
     years = np.arange(1982, 2021)
 
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(10, 6))
     plt.plot(years, china_avg_t2m_celsius, label='Temperature', marker='o')
     plt.title('Annual China Average Temperature Change (1982-2020)')
     plt.xlabel('Year')
     plt.ylabel('Temperature (°C)')
+    plt.grid(True)
     plt.legend()
     plt.show()
 
@@ -48,8 +49,8 @@ else:
     china_avg_tp = np.mean(annual_avg_tp, axis=(1, 2))
     years = np.arange(1982, 2021)
 
-    plt.figure(figsize=(14, 7))
-    plt.plot(years, china_avg_tp, label='precipitation', marker='s')
+    plt.figure(figsize=(10, 6))
+    plt.plot(years, china_avg_tp, label='precipitation', marker='^')
     plt.title('Annual China Average Precipitation Change (1982-2020)')
     plt.xlabel('Year')
     plt.ylabel('Precipitation (mm)')
