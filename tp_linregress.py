@@ -19,12 +19,10 @@ tp_reshape = tp_mm.reshape((-1, 12, tp_mm.shape[1], tp_mm.shape[2]))
 
 tp_annual_avg = tp_reshape.mean(axis=1)
 
-annual_tp_change = np.diff(tp_annual_avg, axis=0)
+tp_annual_year_avg = np.mean(tp_annual_avg, axis=(1, 2))
+years = np.arange(1982, 2021)
 
-mean_annual_tp_change = np.mean(annual_tp_change, axis=(1, 2))
-years = np.arange(1983, 1983 + mean_annual_tp_change.shape[0])
-
-slope, intercept, r_value, p_value, std_err = linregress(years, mean_annual_tp_change)
+slope, intercept, r_value, p_value, std_err = linregress(years, tp_annual_year_avg)
 
 print(f"斜率: {slope:.4f}, 表示每年的平均降水变化量（mm/年）")
 print(f"截距: {intercept:.4f}")
@@ -34,7 +32,7 @@ print(f"标准误差: {std_err:.4f}")
 
 # 绘制年度降水变化和拟合线
 plt.figure(figsize=(10, 6))
-plt.scatter(years, mean_annual_tp_change, label='实际年度降水变化')
+plt.scatter(years, tp_annual_year_avg, label='实际年度降水')
 plt.plot(years, intercept + slope * years, 'r', label='线性拟合趋势线')
 plt.xlabel('年份')
 plt.ylabel('年度降水变化量（mm）')

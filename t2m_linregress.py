@@ -28,24 +28,20 @@ time_size = t2m_celsius.shape[0]
 # 确保时间维度是12的倍数
 assert time_size % 12 == 0, "时间维度不是12的整数倍，检查数据！"
 
-# 重新组织数据为(年份, 月份, 纬度, 经度)
-t2m_reshaped = t2m_celsius.reshape((-1, 12, t2m_celsius.shape[1], t2m_celsius.shape[2]))
+timesteps_per_year = 12
+t2m_reshaped = t2m_celsius.reshape((-1, timesteps_per_year, t2m_celsius.shape[1], t2m_celsius.shape[2]))
 
 # 计算每年的平均值
 t2m_annual_avg = t2m_reshaped.mean(axis=1)
 
-# 使用np.diff()计算连续元素的差值，即得到每个像元上面年度变化量,第一维是年份-1，二三维是地理位置坐标
-annual_temp_change = np.diff(t2m_annual_avg, axis=0)
+# 对每年平均值的空间维度进行平均
+t2m_annual_year_avg = t2m_annual_avg.mean(axis=(1, 2))
 
-# print(annual_temp_change)
-# 计算平均的年度温度变化
-mean_annual_temp_change = np.mean(annual_temp_change, axis=(1, 2))
-
-# 生成年份数据，从1983年开始（因为1982年没有前一年的数据进行对比）
-years = np.arange(1983, 1983 + mean_annual_temp_change.shape[0])
+years=np.arange(1982,2021)
 
 # 进行线性拟合
-slope, intercept, r_value, p_value, std_err = linregress(years, mean_annual_temp_change)
+slope, intercept, r_value, p_value, std_err = linregress(years, t2m_annual_year_avg)
+
 
 # 打印拟合结果
 print(f"斜率: {slope:.4f}, 表示每年的平均温度变化量（摄氏度/年）")
@@ -56,7 +52,7 @@ print(f"标准误差: {std_err:.4f}")
 
 # 绘制年度温度变化和拟合线
 plt.figure(figsize=(10, 6))
-plt.scatter(years, mean_annual_temp_change, label='实际年度温度变化')
+plt.scatter(years, t2m_annual_year_avg, label='实际年度温度')
 plt.plot(years, intercept + slope * years, 'r', label='线性拟合趋势线')
 plt.xlabel('年份')
 plt.ylabel('年度温度变化量（摄氏度）')
