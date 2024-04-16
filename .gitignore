@@ -1,2 +1,5 @@
 download.nc
 Forest.tif
+Forest_Mask.tif
+Forest.tif.enp
+scpdsi_reshape.nc
