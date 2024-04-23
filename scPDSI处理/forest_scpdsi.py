@@ -3,15 +3,29 @@ import rasterio
 import xarray as xr
 import matplotlib.pyplot as plt
 import gc  # 导入垃圾收集器
-from forest_t2m import read_forest_coords
 
-forest_lons, forest_lats = read_forest_coords('Forest_Mask.tif')
+
+def read_forest_coords(mask_path):
+    # 读取掩膜，标记为指定森林的像素经纬度坐标
+    with rasterio.open(mask_path) as src:
+        mask = src.read(1)
+        transform = src.transform
+        # 查找森林位置
+        forest_indices = np.where(mask == 0)
+        # 返回坐标
+        forest_coords = [transform * (x, y) for x, y in zip(forest_indices[1], forest_indices[0])]
+        forest_lons = np.round([coord[0] for coord in forest_coords], decimals=2)
+        forest_lats = np.round([coord[1] for coord in forest_coords], decimals=2)
+        return forest_lons, forest_lats
+
+
+forest_lons, forest_lats = read_forest_coords('D:\Python\pythonProject1\论文\Forest0.5_mark.tif')
 # 释放内存
 gc.collect()
 
 # 使用 chunks 参数进行分块读取，在读取使对数据不进行处理计算，在需要时再调用计算
 ds = xr.open_dataset(
-    'D:\\WeChat\\WeChat Files\\wxid_lvjv33bjbkg222\\FileStorage\\File\\2024-04\\scPDSI.cru_ts4.05early1.1901.2020.cal_1901_20.bams.2021.GLOBAL.1901.2020.nc',
+    'scpdsi_reshape.nc',
     chunks={'time': 12})
 
 # 转换数据集中所有变量的数据类型为float32

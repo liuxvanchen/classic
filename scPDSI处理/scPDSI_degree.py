@@ -1,15 +1,29 @@
 import cartopy
 import numpy as np
+import rasterio
 import xarray as xr
 import matplotlib.pyplot as plt
-from forest_t2m import read_forest_coords
 import matplotlib.colors as mcolors
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
 
+def read_forest_coords(mask_path):
+    # 读取掩膜，标记为指定森林的像素经纬度坐标
+    with rasterio.open(mask_path) as src:
+        mask = src.read(1)
+        transform = src.transform
+        # 查找森林位置
+        forest_indices = np.where(mask == 0)
+        # 返回坐标
+        forest_coords = [transform * (x, y) for x, y in zip(forest_indices[1], forest_indices[0])]
+        forest_lons = np.round([coord[0] for coord in forest_coords], decimals=2)
+        forest_lats = np.round([coord[1] for coord in forest_coords], decimals=2)
+        return forest_lons, forest_lats
+
+
 # 读取森林坐标和数据
-forest_lons, forest_lats = read_forest_coords('Forest_Mask.tif')
+forest_lons, forest_lats = read_forest_coords('D:\Python\pythonProject1\论文\Forest0.5_mark.tif')
 ds = xr.open_dataset('scpdsi_reshape.nc')
 
 # 计算整个数据集的月平均值
@@ -49,11 +63,17 @@ for month in selected_2020data.month.values:
     for pt in range(len(selected_2020data.points)):
         lat = selected_2020data.latitude.values[pt]
         lon = selected_2020data.longitude.values[pt]
-        selected_2020data_reshaped.loc[{'month': month, 'latitude': lat, 'longitude': lon}] = selected_2020data.sel(month=month, points=pt)
+        selected_2020data_reshaped.loc[{'month': month, 'latitude': lat, 'longitude': lon}] = selected_2020data.sel(
+            month=month, points=pt)
 
 # 输出数据以确认
 print("Dimensions of selected_2020data_reshaped:", selected_2020data_reshaped.dims)
 print("Coordinates of selected_2020data_reshaped:", selected_2020data_reshaped.coords)
+# 打印最小值和最大值
+min_value = selected_2020data_reshaped.min().values
+max_value = selected_2020data_reshaped.max().values
+print("最小值:", min_value)
+print("最大值:", max_value)
 
 drought_status = xr.full_like(selected_2020data_reshaped, 0)
 drought_status = xr.where(selected_2020data_reshaped >= 4, 4, drought_status)
@@ -66,8 +86,17 @@ drought_status = xr.where((selected_2020data_reshaped < -2) & (selected_2020data
 drought_status = xr.where((selected_2020data_reshaped < -3) & (selected_2020data_reshaped >= -4), -3, drought_status)
 drought_status = xr.where(selected_2020data_reshaped <= -4, -4, drought_status)
 
+# import xarray as xr
+#
+# for time_value in drought_status['month'].values:
+#     for lat in drought_status['latitude'].values:
+#         for lon in drought_status['longitude'].values:
+#             if (lon>80)&(lon<100):
+#                 status = drought_status.sel(month=time_value, latitude=lat, longitude=lon).values
+#                 print(f"Month: {time_value}, Latitude: {lat}, Longitude: {lon}, Drought Status: {status}")
+
 # 选择特定月份的数据，例如1月
-data_for_map = drought_status.sel(month=7)
+data_for_map = drought_status.sel(month=1)
 print(data_for_map.dims)
 print(data_for_map.coords)
 
@@ -75,10 +104,10 @@ print(data_for_map.coords)
 # 在 -0.5 到 0.5 之间设置浅黄色，并将 0.0 单独设置为白色
 colors = [
     'darkred', 'red', 'orange', 'yellow',
-    'lightyellow', # -0.1 到 0.0
-    'white',       # 0.0
+    'lightyellow',  # -0.1 到 0.0
+    'white',  # 0.0
     'white',
-    'lightyellow', # 0.0 到 0.1
+    'lightyellow',  # 0.0 到 0.1
     'darkgreen', 'blue', 'indigo', 'purple'
 ]
 
