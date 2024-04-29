@@ -13,8 +13,8 @@ def read_forest_coords(mask_path):
     with rasterio.open(mask_path) as src:
         mask = src.read(1)
         transform = src.transform
-        # 查找森林位置
-        forest_indices = np.where(mask == 0)
+        # 用2查找人工林位置，用33查找天然林：：mask=2/33
+        forest_indices = np.where(mask == 2)
         # 返回坐标
         forest_coords = [transform * (x, y) for x, y in zip(forest_indices[1], forest_indices[0])]
         forest_lons = np.round([coord[0] for coord in forest_coords], decimals=2)
@@ -23,7 +23,7 @@ def read_forest_coords(mask_path):
 
 
 # 读取森林坐标和数据
-forest_lons, forest_lats = read_forest_coords('D:\Python\pythonProject1\论文\Forest0.5_mark.tif')
+forest_lons, forest_lats = read_forest_coords('D:\\Python\\pythonProject1\\论文\\forest_new.tif')
 ds = xr.open_dataset('scpdsi_reshape.nc')
 
 # 计算整个数据集的月平均值

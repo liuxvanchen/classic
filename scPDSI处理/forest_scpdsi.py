@@ -19,7 +19,7 @@ def read_forest_coords(mask_path):
         return forest_lons, forest_lats
 
 
-forest_lons, forest_lats = read_forest_coords('D:\Python\pythonProject1\论文\Forest0.5_mark.tif')
+forest_lons, forest_lats = read_forest_coords('D:\Python\pythonProject1\论文\Forest_new_mark.tif')
 # 释放内存
 gc.collect()
 

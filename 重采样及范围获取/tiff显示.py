@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 打开图像
-img = Image.open('D:\Python\pythonProject1\论文\Forest0.5_mark.tif')
+img = Image.open('E:\\人工林数据\\2020pnf.tif')
 
 # 使用 PIL 来显示图像
 img.show()

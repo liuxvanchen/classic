@@ -1,6 +1,6 @@
 import netCDF4 as nc
 
-dataset=nc.Dataset('scpdsi_reshape.nc')
+dataset=nc.Dataset('D:\Python\pythonProject1\论文\scPDSI处理\scpdsi_reshape.nc')
 
 latitudes = dataset.variables['latitude'][:]
 longitudes = dataset.variables['longitude'][:]
