@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
+import geopandas as gpd# 添加shp
 
 
 def read_forest_coords(mask_path):
@@ -14,7 +15,7 @@ def read_forest_coords(mask_path):
         mask = src.read(1)
         transform = src.transform
         # 用2查找人工林位置，用33查找天然林：：mask=2/33
-        forest_indices = np.where(mask == 2)
+        forest_indices = np.where(mask == 33)
         # 返回坐标
         forest_coords = [transform * (x, y) for x, y in zip(forest_indices[1], forest_indices[0])]
         forest_lons = np.round([coord[0] for coord in forest_coords], decimals=2)
@@ -23,7 +24,7 @@ def read_forest_coords(mask_path):
 
 
 # 读取森林坐标和数据
-forest_lons, forest_lats = read_forest_coords('D:\\Python\\pythonProject1\\论文\\forest_new.tif')
+forest_lons, forest_lats = read_forest_coords('D:\\Python\\pythonProject1\\论文\\2020pnf_re1.tif')
 ds = xr.open_dataset('scpdsi_reshape.nc')
 
 # 计算整个数据集的月平均值
@@ -86,6 +87,17 @@ drought_status = xr.where((selected_2020data_reshaped < -2) & (selected_2020data
 drought_status = xr.where((selected_2020data_reshaped < -3) & (selected_2020data_reshaped >= -4), -3, drought_status)
 drought_status = xr.where(selected_2020data_reshaped <= -4, -4, drought_status)
 
+# drought_status = xr.full_like(selected_2020data_reshaped, 0)
+# drought_status = xr.where(selected_2020data_reshaped >= 4,0, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < 4) & (selected_2020data_reshaped >= 3), 0, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < 3) & (selected_2020data_reshaped >= 2), 0, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < 2) & (selected_2020data_reshaped >= 1),3, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < 1) & (selected_2020data_reshaped > -1), 3, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < -1) & (selected_2020data_reshaped >= -2), 3, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < -2) & (selected_2020data_reshaped >= -3), 3, drought_status)
+# drought_status = xr.where((selected_2020data_reshaped < -3) & (selected_2020data_reshaped >= -4), 3, drought_status)
+# drought_status = xr.where(selected_2020data_reshaped <= -4, 3, drought_status)
+
 # import xarray as xr
 #
 # for time_value in drought_status['month'].values:
@@ -96,12 +108,14 @@ drought_status = xr.where(selected_2020data_reshaped <= -4, -4, drought_status)
 #                 print(f"Month: {time_value}, Latitude: {lat}, Longitude: {lon}, Drought Status: {status}")
 
 # 选择特定月份的数据，例如1月
-data_for_map = drought_status.sel(month=1)
+data_for_map = drought_status.sel(month=9)
 print(data_for_map.dims)
 print(data_for_map.coords)
 
-# 创建色彩映射和规范化对象
-# 在 -0.5 到 0.5 之间设置浅黄色，并将 0.0 单独设置为白色
+# 加载 Shapefile
+gdf = gpd.read_file('D:\\Python\\data\\china.shp')
+
+# 设置色彩映射和规范化对象
 colors = [
     'darkred', 'red', 'orange', 'yellow',
     'lightyellow',  # -0.1 到 0.0
@@ -110,24 +124,23 @@ colors = [
     'lightyellow',  # 0.0 到 0.1
     'darkgreen', 'blue', 'indigo', 'purple'
 ]
-
 cmap = mcolors.ListedColormap(colors)
-
-# 设置 bounds
-# 注意：添加额外的界限以确保0.0准确映射到白色
 bounds = [-4.5, -3.5, -2.5, -1.5, -0.5, -0.1, 0.0, 0.1, 0.5, 1.5, 2.5, 3.5, 4.5]
-
-# 创建一个颜色规范化对象
 norm = mcolors.BoundaryNorm(bounds, cmap.N)
+
 # 创建地图
 fig, ax = plt.subplots(figsize=(10, 5), subplot_kw={'projection': ccrs.PlateCarree()})
 ax.set_extent([73, 135, 18, 54], crs=ccrs.PlateCarree())  # 设置地图显示范围
-ax.add_feature(cfeature.BORDERS, linestyle=':')
 
-ax.coastlines()  # 添加海岸线
+# 添加国界和海岸线
+# ax.add_feature(cfeature.BORDERS, linestyle=':')
+# ax.coastlines()
 
-# 绘制数据
+# 绘制气候数据
 data_for_map.plot(ax=ax, transform=ccrs.PlateCarree(), cmap=cmap, norm=norm, add_colorbar=True)
 
-# 显示图
+# 叠加 Shapefile(WGS84系统下的
+gdf.plot(ax=ax, edgecolor='black', facecolor='none', transform=ccrs.PlateCarree())
+
+# 显示图像
 plt.show()
