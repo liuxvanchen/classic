@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
-import geopandas as gpd# 添加shp
+import geopandas  as gpd# 添加shp
 
 
 def read_forest_coords(mask_path):

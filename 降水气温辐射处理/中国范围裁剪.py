@@ -1,40 +1,35 @@
 import xarray as xr
+import numpy as np
 import geopandas as gpd
 import rasterio
-from rasterio.features import geometry_mask
-from rasterio.transform import from_origin
-import numpy as np
-
-# 读取矢量边界
-gdf = gpd.read_file('E:\\Data-py\\shp\\全国shp\\国界线\\国界线-84.shp')
+from rasterio.features import rasterize
 
 # 读取NetCDF数据
-ds = xr.open_dataset('download.nc')
+ds1 = xr.open_dataset(r'download.nc')
+time = ds1.time.data # time 变量名
+lat = ds1.latitude.data # lat 变量名
+lon = ds1.longitude.data # lon 变量名
+tp = np.array(ds1.tp.data)
 
-# 使用rioxarray为数据集添加CRS
-import rioxarray
-ds = ds.rio.write_crs("epsg:4326")  # 假设NetCDF数据是WGS84坐标系
+# 读取Shapefile
+gdf = gpd.read_file(r'E:\Data-py\shp\全国shp\国界线\国界线-84.shp')
+gdf = gdf.to_crs('EPSG:4326') # 正确的CRS初始化方法
 
-# 如果CRS不匹配，转换GeoDataFrame的CRS
-if ds.rio.crs != gdf.crs:
-    gdf = gdf.to_crs(ds.rio.crs)
+# 创建地理掩码
+transform = rasterio.transform.from_origin(lon.min(), lat.max(), lon[1] - lon[0], lat[1] - lat[0])
+mask = rasterize([(geom, 1) for geom in gdf.geometry], out_shape=(len(lat), len(lon)), transform=transform, fill=0, all_touched=True, dtype='float32')
+mask[mask == 0] = np.nan # 将掩码中的0转换为nan
 
-# 计算经度和纬度的分辨率
-longitude_resolution = ds['longitude'].diff(dim='longitude').mean().item()
-latitude_resolution = ds['latitude'].diff(dim='latitude').mean().item()
+# 应用掩码
+tp_masked = tp * mask[np.newaxis, :, :] # 假设tp是三维的，时间维度在前
 
-# 创建一个基于矢量数据的mask
-mask = geometry_mask([geom for geom in gdf.geometry],
-                     out_shape=(len(ds['latitude']), len(ds['longitude'])),
-                     transform=from_origin(ds['longitude'].min().item(), ds['latitude'].max().item(),
-                                           longitude_resolution, latitude_resolution),
-                     invert=True)
-
-# 将mask转换为DataArray
-mask_da = xr.DataArray(mask, dims=["latitude", "longitude"], coords={"latitude": ds['latitude'], "longitude": ds['longitude']})
-
-# 应用mask裁剪数据
-clipped_ds = ds.where(mask_da, drop=True)
+# 创建新的xarray数据集
+ds3 = xr.Dataset({
+'tp': (('time', 'lat', 'lon'), tp_masked),
+'lat': (('lat',), lat),
+'lon': (('lon',), lon),
+'time': (('time',), time)
+})
 
 # 保存裁剪后的数据
-clipped_ds.to_netcdf('D:\\Python\\data\\clipped.nc')
+ds3.to_netcdf(r'D:\Python\data\clipped_tp.nc')
