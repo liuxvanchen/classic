@@ -3,19 +3,38 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 加载nc文件
-ds = nc.Dataset('download.nc')
+ds = nc.Dataset('D:\Python\data\clip_nc.nc')
 
 # 假设t2m变量包含了一个(time, latitude, longitude)的数据结构
 t2m = ds.variables['t2m'][:]
 ssrd = ds.variables['ssrd'][:]  # 地表太阳辐射
 tp = ds.variables['tp'][:]  # 总降水量
 
+#对t2m变量应用缩放因子和偏移量
+# scale_factor = ds.variables['t2m'].scale_factor
+# add_offset = ds.variables['t2m'].add_offset
+# actual_t2m = t2m* scale_factor + add_offset
+
+
 # 将温度从开尔文转换为摄氏度
 t2m_celsius = t2m - 273.15
+
+# 对tp变量应用缩放因子和偏移量
+# scale_factor = ds.variables['tp'].scale_factor
+# add_offset = ds.variables['tp'].add_offset
+# actual_precipitation = tp * scale_factor + add_offset
+
+#单位转换
+# tp_mm = actual_precipitation * 1000
 tp_mm = tp * 1000
 
-# 假设我们有一个每月数据点的时间序列，需要计算每年的平均值
-# 这里，我们需要知道总的时间长度，以及经纬度的维度大小
+
+# 对ssrd应用缩放因子和偏移量
+# scale_factor = ds.variables['ssrd'].scale_factor
+# add_offset = ds.variables['ssrd'].add_offset
+# actual_ssrd = ssrd * scale_factor + add_offset
+
+# 知道总的时间长度，以及经纬度的维度大小
 time_len = ds.dimensions['time'].size
 lat_len = ds.dimensions['latitude'].size
 lon_len = ds.dimensions['longitude'].size
@@ -24,6 +43,7 @@ lon_len = ds.dimensions['longitude'].size
 if time_len % 12 != 0:
     print("时间维度不是12的整数倍，检查数据！")
 else:
+    print(time_len)
     # 计算每年的平均值
     years_len = time_len // 12
     # 重新整形数组为(years, months, latitude, longitude)，然后计算沿着月份的平均值
@@ -65,7 +85,7 @@ else:
     plt.plot(years, china_avg_ssrd, label='Radiation', marker='^')
     plt.title('Annual China Average Radiation Change (1982-2020)')
     plt.xlabel('Year')
-    plt.ylabel('Radiation (J/m² or W/m²)')  # 根据你的数据单位更新括号内的内容
+    plt.ylabel('Radiation (J/m²)')
 
     plt.legend()
     plt.show()

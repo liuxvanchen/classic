@@ -1,46 +1,23 @@
-import xarray as xr
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
+import netCDF4 as nc
 
-# 读取 NetCDF 文件
-data = xr.open_dataset('D:\\WeChat\\WeChat Files\\wxid_lvjv33bjbkg222\\FileStorage\\File\\2024-04\\scPDSI.cru_ts4.05early1.1901.2020.cal_1901_20.bams.2021.GLOBAL.1901.2020.nc')
+# Open the NetCDF file
+ds = nc.Dataset('D:\Python\data\clip_nc.nc', 'r')  # 'r' is for read mode
 
-# 打印所有变量名
-print("Variables in the NetCDF file:")
-for var in data.variables:
-    print(var)
+# Access a specific variable, replace 'variable_name' with the name of your variable
+variable = ds.variables['ssrd']
 
-# # 读取下载的 NetCDF 文件
-# data = xr.open_dataset('D:\\Python\\pythonProject1\\论文\\download.nc')
-#
-# # 提取变量数据
-# radiation = data['ssrd']
-# precipitation = data['tp']
-#
-# # 提取温度数据
-# temperature = data['t2m']
-#
-# # 绘制温度数据
-# plt.figure(figsize=(10, 5))
-# temperature.mean(dim='time').plot()
-# plt.title('Mean Temperature')
-# plt.xlabel('Longitude')
-# plt.ylabel('Latitude')
-# plt.show()
-#
-# # 绘制辐射数据
-# plt.figure(figsize=(10, 5))
-# radiation.mean(dim='time').plot()
-# plt.title('Mean Surface Solar Radiation Downwards')
-# plt.xlabel('Longitude')
-# plt.ylabel('Latitude')
-# plt.show()
-#
-# # 绘制降水数据
-# plt.figure(figsize=(10, 5))
-# precipitation.mean(dim='time').plot()
-# plt.title('Mean Total Precipitation')
-# plt.xlabel('Longitude')
-# plt.ylabel('Latitude')
-# plt.show()
+# Print all attributes of the variable
+print("Attributes of the variable:")
+for attr_name in variable.ncattrs():
+    print(f"{attr_name}: {getattr(variable, attr_name)}")
+
+# Optionally, check specific attributes like scale_factor or add_offset
+if hasattr(variable, 'scale_factor'):
+    print("Scale factor:", variable.scale_factor)
+
+if hasattr(variable, 'add_offset'):
+    print("Add offset:", variable.add_offset)
+
+# Close the dataset after done
+ds.close()
+
