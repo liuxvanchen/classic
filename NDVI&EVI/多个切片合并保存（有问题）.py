@@ -5,8 +5,8 @@ from pyhdf.SD import SD, SDC
 import h5py
 
 directory = r'E:\浏览器下载\ndvi-evi'
-output_directory = r'E:\Data-py\NDVI'
-pattern = re.compile(r"MOD13A3\.A2020001\.h(\d{2})v(\d{2})\..*\.hdf$")
+output_directory = 'E:\\Data-py\\NDVI\\2020-2ndvihdf'
+pattern = re.compile(r"MOD13A3\.A20200032\.h(\d{2})v(\d{2})\..*\.hdf$")
 
 # 确保输出目录存在
 if not os.path.exists(output_directory):
@@ -40,9 +40,21 @@ for filename in os.listdir(directory):
             # 将数据放到正确的位置
             all_ndvi_data[v_offset:v_offset + tile_height, h_offset:h_offset + tile_width] = ndvi_data
 
-# 保存数据到HDF5文件
-output_path = os.path.join(output_directory, 'ndvi_2020_1.h5')
-with h5py.File(output_path, 'w') as h5f:
-    h5f.create_dataset('all_ndvi', data=all_ndvi_data)
+
+output_directory = 'E:\\Data-py\\NDVI\\2020-2ndvihdf'
+output_path = os.path.join(output_directory, 'mergendvi_2020_2.hdf')
+
+# 创建 HDF 文件
+hdf = SD(output_path, SDC.CREATE | SDC.WRITE)
+
+# 创建数据集
+sds = hdf.create("all_ndvi", SDC.FLOAT32, all_ndvi_data.shape)
+
+# 写入数据
+sds[:] = all_ndvi_data
+
+# 关闭 HDF 文件
+sds.endaccess()
+hdf.end()
 
 print(f"Data saved to {output_path}")
